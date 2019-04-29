@@ -9,6 +9,9 @@ sets = sorted(glob.glob('%s/set_*' % dir))
 for set in sets:
     if not os.path.isdir(set): continue
     files = sorted(glob.glob('%s/*.JPG' % set))
+    if len(files) < 2:
+        print 'Set does not contain enough images!'
+        continue
     setName = os.path.basename(set)
     print setName
     # Check the orientation of these images. Currently only support "horizontal" and "90 CCW".

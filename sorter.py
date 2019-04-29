@@ -37,6 +37,10 @@ for i in range(0, len(sets)):
     setNum = i + setOffset
     print 'set %2d: %s to %s (%3d images)' % (setNum, os.path.basename(set[0]),
                                              os.path.basename(set[-1]), len(set))
+    if len(set) < 2:
+        print 'Not enough images to make a set!'
+        continue
+
     newDirName = os.path.join(dir, 'set_%02d' % setNum)
     os.mkdir(newDirName)
     for oldFile in set:
