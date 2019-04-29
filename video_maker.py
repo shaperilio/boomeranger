@@ -14,29 +14,31 @@ for set in sets:
         continue
     setName = os.path.basename(set)
     print setName
-    # Check the orientation of these images. Currently only support "horizontal" and "90 CCW".
+    # Check the orientation of these images. Currently only support "horizontal" and "90 CW".
     os.system('exiftool -Orientation -n %s > /tmp/orient.txt' % files[0])
     with open('/tmp/orient.txt', 'r') as f:
         orientation = f.read()
     if ': 1' in orientation:
-        scale = '1920:1280'
+        vf = 'scale=1920:1280'
         print 'Images are horizontal'
     elif ': 6' in orientation:
-        scale = '1920:1280' # Got random orientation 6 on horizontal images? lame.
+        vf = 'scale=1920:1280,transpose=1' # see https://stackoverflow.com/a/9570992
         print 'Images are vertical'
+    else:
+        raise ValueError('Unsupported image rotation!\n%s' % orientation)
     # Start at the second frame, because the reverse clip will end at the first frame.
     startNum = int(os.path.basename(files[1])[len('image-'):-len('.JPG')])
     videoFileForward = os.path.join(dir, '%s_forward.mp4' % setName)
-    ffmpeg = "ffmpeg -y -start_number %d -r %d -i '%s/image-%%05d.JPG' -vf scale=%s -vcodec libx264 " \
-             "-crf %d -pix_fmt yuv420p %s > /dev/null 2>&1" % (startNum, fps, set, scale, quality, videoFileForward)
+    ffmpeg = "ffmpeg -y -start_number %d -r %d -i '%s/image-%%05d.JPG' -vf '%s' -vcodec libx264 " \
+             "-crf %d -pix_fmt yuv420p %s > /dev/null 2>&1" % (startNum, fps, set, vf, quality, videoFileForward)
     print 'Forward'
     os.system(ffmpeg)
 
     # Reverse clip starts at the second to last frame, because the forward clip ends at the last frame.
     startNum = int(os.path.basename(files[-2])[len('image'):-len('.JPG')])
     videoFileReverse = os.path.join(dir, '%s_reverse.mp4' % setName)
-    ffmpeg = "ffmpeg -y -start_number %d -r %d -i '%s/image%%05d.JPG' -vf scale=%s -vcodec libx264 " \
-             "-crf %d -pix_fmt yuv420p %s > /dev/null 2>&1" % (startNum, fps, set, scale, quality, videoFileReverse)
+    ffmpeg = "ffmpeg -y -start_number %d -r %d -i '%s/image%%05d.JPG' -vf '%s' -vcodec libx264 " \
+             "-crf %d -pix_fmt yuv420p %s > /dev/null 2>&1" % (startNum, fps, set, vf, quality, videoFileReverse)
     print 'Reverse'
     os.system(ffmpeg)
 
