@@ -1,0 +1,1 @@
+Requires [exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) and [ffmpeg](http://ffmpeg.org/download.html)
