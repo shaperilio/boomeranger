@@ -1,6 +1,6 @@
 import os, glob, math
 
-dir = os.path.expanduser('~/Desktop/100MSDCF')
+dir = os.path.expanduser('~/Desktop/DCIM/100MSDCF')
 
 quality = 15 # MP4 quality; lower is better
 fps = 24
