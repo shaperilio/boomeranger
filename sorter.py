@@ -1,6 +1,9 @@
 import os, shutil
+from video_maker import fps
 
-dir = os.path.expanduser('~/Desktop/100MSDCF')
+minImagesPerSet = fps # if less than this number of images makes a sequence, don't make it into a set.
+
+dir = os.path.expanduser('~/Desktop/DCIM/100MSDCF')
 setOffset = 0 # number for first set.
 files = os.listdir(dir)
 if len(files) == 0:
@@ -21,15 +24,21 @@ for file in sorted(files):
         if timeDeltaSec < 3: # Apparently within a burst, some files will have a time difference of 2 seconds.
             thisSet.append(filename) # add file to this set; it was taken soon after the previous file.
         else:
-            print 'Start of set: %s - %10.3f' % (file, timeDeltaSec)
-            sets.append(thisSet) # store the set
+            # Bigger jump in file date; assume this is the start of a new set.
+            if len(thisSet) >= minImagesPerSet:
+                print 'Set with %3d images formed; next file is    %10.3f seconds away' % (len(thisSet), timeDeltaSec)
+                sets.append(thisSet) # store the set
+            else:
+                print 'Set with %3d images discarded; next file is %10.3f seconds away' % (len(thisSet), timeDeltaSec)
+
             thisSet = [filename] # start a new one.
     else:
         thisSet.append(filename) # first time around; add file to set.
     lastDate = thisDate
 
-if len(thisSet) > 0:
+if len(thisSet) >= minImagesPerSet:
     # Trailing images got collected here. That's our last set.
+    print 'Set with %3d images formed; arrived at last file' % len(thisSet)
     sets.append(thisSet)
 
 for i in range(0, len(sets)):
@@ -37,9 +46,6 @@ for i in range(0, len(sets)):
     setNum = i + setOffset
     print 'set %2d: %s to %s (%3d images)' % (setNum, os.path.basename(set[0]),
                                              os.path.basename(set[-1]), len(set))
-    if len(set) < 2:
-        print 'Not enough images to make a set!'
-        continue
 
     newDirName = os.path.join(dir, 'set_%02d' % setNum)
     os.mkdir(newDirName)
