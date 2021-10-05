@@ -58,7 +58,7 @@ for i in range(len(sets)):
           f'({len(set):3d} images)')
 
     new_dir = os.path.join(input_dir, 'set_%02d' % set_num)
-    os.mkdir(new_dir)
+    os.makedirs(new_dir, exist_ok=False)
     for old_file in set:
         # By putting a hyphen in the name, we can then use negative file numbers
         # to encode sequences in reverse.
