@@ -22,6 +22,9 @@ photo_prefix = 'DSC'
 import os
 input_dir = os.path.join(os.path.expanduser('~'), 'Desktop', 'DCIM', '100MSDCF')
 
+# Location of the final boomerang videos
+output_dir = os.path.join(input_dir, 'boomerangs')
+
 # Desired video width. Images will be scaled to this. Must be even!
 video_width = 1920
 

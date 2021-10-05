@@ -85,7 +85,7 @@ for set in sets:
             f.write(f'file {fwd}\n')
             f.write(f'file {rev}\n')
 
-    video_file = os.path.join(input_dir, f'{set_name}_boomerang.mp4')
+    video_file = os.path.join(output_dir, f'{set_name}_boomerang.mp4')
 
     ffmpeg = f"{ffmpeg_call} -y -safe 0 -f concat -i \"{concat_file}\" -c copy {video_file} > {dev_null} 2>&1"
     print('Concat')
