@@ -26,9 +26,9 @@ for set in sets:
     if output_dims is None:
         # We have to compute our own output size, maintaining aspect ratio, and
         # making sure the height is divisible by 2.
-        exiftool = f'{exiftool_call} -ImageWidth -s -s -s {files[0]}'  # -s 3 times gets value only
+        exiftool = f'{exiftool_call} -ImageWidth -s -s -s "{files[0]}"'  # -s 3 times gets value only
         width = int(get_output(exiftool))
-        exiftool = f'{exiftool_call} -ImageHeight -s -s -s {files[0]}'  # -s 3 times gets value only
+        exiftool = f'{exiftool_call} -ImageHeight -s -s -s "{files[0]}"'  # -s 3 times gets value only
         height = int(get_output(exiftool))
         AR = height / float(width)
         new_width = video_width
@@ -39,7 +39,7 @@ for set in sets:
         print(f'{width}x{height} -> {output_dims}')
     # Check the orientation of these images. Currently only support "horizontal"
     # and "90 CW".
-    exiftool = f'{exiftool_call} -Orientation -n {files[0]}'
+    exiftool = f'{exiftool_call} -Orientation -n "{files[0]}"'
     orientation = get_output(exiftool)
     if ': 1' in orientation:
         vf = f'scale={output_dims}'
@@ -51,9 +51,10 @@ for set in sets:
         raise RuntimeError(f'Unsupported image rotation!\n{orientation}')
     # Start at the second frame, because the reverse clip will end at the first frame.
     start_num = int(os.path.basename(files[1])[len('image-'):-len(photo_ext)])
+    num_pattern = f'%0{len(str(start_num))}d'
     vid_file_fwd = os.path.join(input_dir, f'{set_name}_forward.mp4')
-    ffmpeg = f"{ffmpeg_call} -y -start_number {start_num} -r {fps} -i \"{set}/image-%05d.JPG\" " \
-             f"-vf \"{vf}\" -vcodec libx264 -crf {quality} -pix_fmt yuv420p {vid_file_fwd} " \
+    ffmpeg = f"{ffmpeg_call} -y -start_number {start_num} -r {fps} -i \"{set}/image-{num_pattern}.JPG\" " \
+             f"-vf \"{vf}\" -vcodec libx264 -crf {quality} -pix_fmt yuv420p \"{vid_file_fwd}\" " \
              f"> {dev_null} 2>&1"
     print('Forward')
     os.system(ffmpeg)
@@ -61,8 +62,8 @@ for set in sets:
     # Reverse clip starts at the second to last frame, because the forward clip ends at the last frame.
     start_num = int(os.path.basename(files[-2])[len('image'):-len(photo_ext)])
     vid_file_rev = os.path.join(input_dir, f'{set_name}_reverse.mp4')
-    ffmpeg = f"{ffmpeg_call} -y -start_number {start_num} -r {fps} -i \"{set}/image%05d.JPG\" " \
-             f"-vf \"{vf}\" -vcodec libx264 -crf {quality} -pix_fmt yuv420p {vid_file_rev} " \
+    ffmpeg = f"{ffmpeg_call} -y -start_number {start_num} -r {fps} -i \"{set}/image{num_pattern}.JPG\" " \
+             f"-vf \"{vf}\" -vcodec libx264 -crf {quality} -pix_fmt yuv420p \"{vid_file_rev}\" " \
              f"> {dev_null} 2>&1"
     print('Reverse')
     os.system(ffmpeg)
@@ -78,8 +79,9 @@ for set in sets:
     # Make the concat list.
     concat_file = os.path.join(temp_dir, 'concat.txt')
     # ffmpeg needs the backslashes escaped when loading a file list from a file.
-    fwd = vid_file_fwd.replace("\\", "\\\\")
-    rev = vid_file_rev.replace("\\", "\\\\")
+    # Also escape spaces
+    fwd = vid_file_fwd.replace("\\", "\\\\").replace(" ", "\ ")
+    rev = vid_file_rev.replace("\\", "\\\\").replace(" ", "\ ")
     with open(concat_file, 'w') as f:
         for i in range(num_pairs):
             f.write(f'file {fwd}\n')
@@ -88,7 +90,7 @@ for set in sets:
     os.makedirs(output_dir, exist_ok=True)
     video_file = os.path.join(output_dir, f'{set_name}_boomerang.mp4')
 
-    ffmpeg = f"{ffmpeg_call} -y -safe 0 -f concat -i \"{concat_file}\" -c copy {video_file} > {dev_null} 2>&1"
+    ffmpeg = f"{ffmpeg_call} -y -safe 0 -f concat -i \"{concat_file}\" -c copy \"{video_file}\" > {dev_null} 2>&1"
     print('Concat')
     os.system(ffmpeg)
     print()
