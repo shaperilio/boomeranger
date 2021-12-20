@@ -2,20 +2,41 @@
 
 import os, shutil
 from constants import *
+import re
 
 set_offset = 0 # number for first set in this run.
 
 files = os.listdir(input_dir)
-if len(files) == 0:
-    print('No files.')
-    exit(0)
 
-last_date = None
-sets = []
+# Check for directories or files.
+has_files = False
+has_directories = False
 for file in sorted(files):
     filename = os.path.join(input_dir, file)
     if os.path.isdir(filename):
-        continue
+        has_directories = True
+    elif os.path.isfile(filename):
+        has_files = True
+
+if not has_files and not has_directories:
+    raise RuntimeError('No files or directories to sort through.')
+if has_files and has_directories:
+    raise RuntimeError('Found both files and directories. Cannot proceed.')
+
+if has_directories:
+    # Collect filenames from the subdirectories. We only go one deep.
+    actual_files = []
+    for d in sorted(files):
+        dirname = os.path.join(input_dir, d)
+        sub_files = os.listdir(dirname)
+        for file in sorted(sub_files):
+            actual_files.append(os.path.join(dirname, file))
+else:
+    actual_files = [os.path.join(input_dir, file) for file in sorted(files)]
+
+last_date = None
+sets = []
+for filename in actual_files:
     if not photo_ext in filename:
         continue
     # mtime is the only one that works, sadly the resolution is not high enough
@@ -60,8 +81,24 @@ for i in range(len(sets)):
     new_dir = os.path.join(input_dir, 'set_%02d' % set_num)
     os.makedirs(new_dir, exist_ok=False)
     for old_file in set:
-        # By putting a hyphen in the name, we can then use negative file numbers
-        # to encode sequences in reverse.
-        newFile = os.path.join(new_dir, f'image-{os.path.basename(old_file)[len(photo_prefix):]}')
+        # If we had subdirs, take digits from there to maintain image order
+        # across folder boundaries.
+        image_num_and_ext = os.path.basename(old_file)[len(photo_prefix):]
+        if has_directories:
+            subdir = os.path.basename(os.path.dirname(old_file))
+            dir_num_match = re.search(subdir_number_pattern, subdir)
+            if dir_num_match is None:
+                raise RuntimeError(f'Photo subdirectory "{subdir}" has no numbers.')
+            dir_num = dir_num_match[0]
+            # By putting a hyphen in the name, we can then use negative file numbers
+            # to encode sequences in reverse.
+            # TODO: This doesn't work; it causes a large jump in the number and
+            # ffmpeg won't follow the sequence. We need to remember the last
+            # number and then add it to each subsequent dir, or do something
+            # more clever.
+            new_file = f'image-{dir_num}{image_num_and_ext}'
+        else:
+            new_file = f'image-{image_num_and_ext}'
+        newFile = os.path.join(new_dir, new_file)
         print(f'\t{old_file} --> {newFile}')
         shutil.move(old_file, newFile)

@@ -53,6 +53,7 @@ for set in sets:
     start_num = int(os.path.basename(files[1])[len('image-'):-len(photo_ext)])
     num_pattern = f'%0{len(str(start_num))}d'
     vid_file_fwd = os.path.join(input_dir, f'{set_name}_forward.mp4')
+    # TODO: Should probably have a config parameter for '.JPG'
     ffmpeg = f"{ffmpeg_call} -y -start_number {start_num} -r {fps} -i \"{set}/image-{num_pattern}.JPG\" " \
              f"-vf \"{vf}\" -vcodec libx264 -crf {quality} -pix_fmt yuv420p \"{vid_file_fwd}\" " \
              f"> {dev_null} 2>&1"

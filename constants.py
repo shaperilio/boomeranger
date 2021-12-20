@@ -18,9 +18,17 @@ photo_ext = '.JPG'
 # named DSC05234.JPG
 photo_prefix = 'DSC'
 
-# Location of photos, e.g. where you copied the contents of your SD card.
+# Location of photos, e.g. where you copied the contents of your SD card. If
+# your camera created multiple folders (e.g. the file counter has looped back to
+# zero), point this to the folder containing the subfolders.
 import os
-input_dir = os.path.join(os.path.expanduser('~'), 'Desktop', 'DCIM', '100MSDCF')
+input_dir = os.path.join(os.path.expanduser('~'), 'Desktop', 'DCIM')
+
+# A regex pattern to search for a number in photo subdirectories; e.g. if
+# `input_dir` contains subfolders '100MSDCF' and '101MSDCF', you want something
+# that will extract the '100' and '101'. The first matching group is taken as
+# the number.
+subdir_number_pattern = '([0-9]+)'
 
 # Location of the final boomerang videos
 output_dir = os.path.join(input_dir, 'boomerangs')
